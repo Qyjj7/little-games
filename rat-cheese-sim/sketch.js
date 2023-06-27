@@ -1,58 +1,90 @@
-class Mouse {
-  constructor() {
-    this.pos = createVector(width/2, height/2);
-    this.destination = createVector(width/2, height/2);
+class Rat {
+  constructor(x, y) {
+    this.pos = createVector(x, y);
+    this.destination = createVector(x, y);
+    this.direction = createVector(0, 0);
     this.vel = createVector(0, 0);
-    this.acceleration = createVector(0, 0);
+    this.w = 50;
+    this.h = 100;
+    this.mouthRadius = 15;
     this.topSpeed = 5;
-    this.accelerationConstant= 0.7;
-    this.headRadius = 20;
-    this.bodyRadius = 30;
-
+    this.acceleration = 1;
+    this.atDestination = true;
   }
 
   display() {
     noFill();
-    circle(this.pos.x, this.pos.y, this.bodyRadius*2); //mouse body
-    circle(this.destination.x, this.destination.y, 10); //destination
+    ratImage.width = this.w;
+    ratImage.height = this.h * 1.5;
+    rectMode(CENTER);
+    circle(this.destination.x, this.destination.y, 10);
+
+    push();
+    translate(this.pos.x, this.pos.y);
+    rotate(this.vel.heading() + PI/2);
+    //triangle(-this.w, -this.w/2, -this.w, this.w/2, this.w, 0);
+    rect(0, 0, this.w, this.h);
+    circle(0, -this.h/2, this.mouthRadius*2);
+    image(ratImage, 5, 20);
+    pop();
   }
 
   update() {
 
-    this.vel.add(this.acceleration);
+    this.direction.set(this.destination.x - this.pos.x, this.destination.y - this.pos.y);
+    this.direction.normalize();
 
-    this.pos.add(this.vel);
+    if (! this.atDestination) {
+      this.vel.add(this.direction.mult(this.acceleration));
+      this.vel.limit(this.topSpeed);
+      this.pos.add(this.vel);
+    }
   }
 
-  seek() {
+  destinationCheck() {
+    if (dist(this.destination.x, this.destination.y, this.pos.x, this.pos.y) <= 10) {
+      this.atDestination = true;
+    }
+  }
+}
 
-    let desiredVel = createVector(this.destination.x - this.pos.x, this.destination.y - this.pos.y);
-    desiredVel.setMag(this.topSpeed);
-    this.acceleration.set(desiredVel.x - this.vel.x, desiredVel.y - this.vel.y);
-    this.acceleration.normalize();
-    this.acceleration.mult(this.accelerationConstant);
+class Cheese {
+  constructor() {
   }
 
+  display() {
+
+  }
 
 }
 
-let theMouse;
+
+let theRat;
+let theCheese;
+let ratImage;
+
+function preload() {
+  ratImage = loadImage("rat2.png");
+}
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
 
-  theMouse = new Mouse();
+  imageMode(CENTER);
+  theRat = new Rat(width/2, height/2);
+  theCheese = new Cheese();
+
 }
 
 function draw() {
   background(220);
 
-  theMouse.seek();
-  theMouse.update();
-  theMouse.display();
+  theRat.update();
+  theRat.destinationCheck();
+  theRat.display();
 }
 
 function mousePressed() {
-  theMouse.destination.set(mouseX, mouseY);
-  theMouse.seek();
+  theRat.destination.set(mouseX, mouseY);
+  theRat.atDestination = false;
 }
